@@ -8,7 +8,7 @@ from sklearn.model_selection import train_test_split
 
 from src.exception import CustomException
 from src.logger import logging
-
+from src.Components.data_transformation import DataTransformation
 
 @dataclass
 class DataIngestionConfig:
@@ -30,20 +30,18 @@ class DataIngestion:
         self.ingestion_config = DataIngestionConfig()
 
     def initiate_data_ingestion(self):
-        logging.info(
-            "Entered the data ingestion method or component"
-        )
+        logging.info("Entered the data ingestion component")
 
         try:
             # Read the original dataset
-            df = pd.read_csv(r"notebook\data\stud.csv")
+            df = pd.read_csv("notebook/data/stud.csv")
 
-            logging.info("Read the dataset as a DataFrame")
+            logging.info("Dataset loaded successfully")
 
             # Create the artifacts directory
             os.makedirs(
                 os.path.dirname(
-                    self.ingestion_config.train_data_path
+                    self.ingestion_config.raw_data_path
                 ),
                 exist_ok=True
             )
@@ -51,11 +49,10 @@ class DataIngestion:
             # Save the original dataset
             df.to_csv(
                 self.ingestion_config.raw_data_path,
-                index=False,
-                header=True
+                index=False
             )
 
-            logging.info("Train-test split initiated")
+            logging.info("Starting train-test split")
 
             # Split the dataset into training and testing sets
             train_set, test_set = train_test_split(
@@ -64,23 +61,19 @@ class DataIngestion:
                 random_state=42
             )
 
-            # Save the training dataset
+            # Save training data
             train_set.to_csv(
                 self.ingestion_config.train_data_path,
-                index=False,
-                header=True
+                index=False
             )
 
-            # Save the testing dataset
+            # Save testing data
             test_set.to_csv(
                 self.ingestion_config.test_data_path,
-                index=False,
-                header=True
+                index=False
             )
 
-            logging.info(
-                "Ingestion of the data is completed"
-            )
+            logging.info("Data ingestion completed successfully")
 
             return (
                 self.ingestion_config.train_data_path,
@@ -88,15 +81,37 @@ class DataIngestion:
             )
 
         except Exception as e:
-            raise CustomException(e, sys)
+            logging.exception("Error during data ingestion")
+            raise CustomException(e, sys) from e
 
 
 if __name__ == "__main__":
-    obj = DataIngestion()
+    try:
+        # Step 1: Data ingestion
+        ingestion = DataIngestion()
 
-    train_data, test_data = obj.initiate_data_ingestion()
+        train_data, test_data = (
+            ingestion.initiate_data_ingestion()
+        )
 
-    print("Data ingestion completed successfully!")
-    print("Training data:", train_data)
-    print("Testing data:", test_data)
+        print("Data ingestion completed successfully!")
+        print("Training data:", train_data)
+        print("Testing data:", test_data)
 
+        # Step 2: Data transformation
+        transformation = DataTransformation()
+
+        train_arr, test_arr, preprocessor_path = (
+            transformation.initiate_data_transformation(
+                train_data,
+                test_data
+            )
+        )
+
+        print("Data transformation completed successfully!")
+        print("Training array shape:", train_arr.shape)
+        print("Testing array shape:", test_arr.shape)
+        print("Preprocessor saved at:", preprocessor_path)
+
+    except Exception as e:
+        print(f"Pipeline failed: {e}")
