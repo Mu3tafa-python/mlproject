@@ -23,6 +23,14 @@ def save_object(file_path, obj):
     except Exception as e:
         raise CustomException(e, sys) from e
 
+    
+def load_object(file_path):
+    """
+    Load a Python object from a pickle file.
+    """
+    with open(file_path, "rb") as file:
+        return pickle.load(file)
+
 
 def evaluate_models(
     X_train,
